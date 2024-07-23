@@ -3,6 +3,8 @@ include 'includes/session.php';
 requireLogin();
 include 'includes/db.php';
 
+$errorMessages = [];
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $firstname = $_POST['firstname'];
     $lastname = $_POST['lastname'];
@@ -11,19 +13,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $position = $_POST['position'];
     $profile_picture = '';
 
+    $target_dir = "uploads/";
+    $target_file = $target_dir . basename($_FILES["profile_picture"]["name"]);
+    $uploadOk = 1;
+    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+
     if ($_FILES['profile_picture']['name']) {
-        $target_dir = "uploads/";
-        $target_file = $target_dir . basename($_FILES["profile_picture"]["name"]);
-        if (move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file)) {
+        $check = getimagesize($_FILES["profile_picture"]["tmp_name"]);
+        if ($check === false) {
+            $errorMessages[] = "File is not an image.";
+            $uploadOk = 0;
+        }
+
+        if (file_exists($target_file)) {
+            $errorMessages[] = "Sorry, file already exists.";
+            $uploadOk = 0;
+        }
+
+        if ($_FILES["profile_picture"]["size"] > 500000) {
+            $errorMessages[] = "Sorry, your file is too large.";
+            $uploadOk = 0;
+        }
+
+        if (!in_array($imageFileType, ["jpg", "png", "jpeg", "gif"])) {
+            $errorMessages[] = "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+            $uploadOk = 0;
+        }
+
+        if ($uploadOk && move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file)) {
             $profile_picture = $target_file;
+        } else {
+            $errorMessages[] = "Sorry, there was an error uploading your file.";
         }
     }
 
-    $sql = "INSERT INTO employees (firstname, lastname, email, phone, position, profile_picture) VALUES ('$firstname', '$lastname', '$email', '$phone', '$position', '$profile_picture')";
-    if ($conn->query($sql) === TRUE) {
-        header("Location: index.php");
-    } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+    if (empty($errorMessages)) {
+        $sql = "INSERT INTO employees (firstname, lastname, email, phone, position, profile_picture) VALUES ('$firstname', '$lastname', '$email', '$phone', '$position', '$profile_picture')";
+        if ($conn->query($sql) === TRUE) {
+            header("Location: index.php");
+        } else {
+            $errorMessages[] = "Error: " . $sql . "<br>" . $conn->error;
+        }
     }
 }
 ?>
@@ -37,7 +67,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <style>
         body {
             background: linear-gradient(to right, rgb(237, 59, 118), rgb(146, 221, 244));
-            ;
             font-family: 'Arial', sans-serif;
         }
         .container {
@@ -69,11 +98,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: #0056b3;
             border-color: #004085;
         }
+        .error-message {
+            color: red;
+            background-color: black;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Add Employee</h2>
+        <?php if (!empty($errorMessages)): ?>
+            <div class="error-message">
+                <?php foreach ($errorMessages as $errorMessage): ?>
+                    <p><?php echo $errorMessage; ?></p>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
         <form action="add_employee.php" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="firstname">First Name:</label>

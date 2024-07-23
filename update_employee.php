@@ -3,9 +3,10 @@ include 'includes/session.php';
 requireLogin();
 include 'includes/db.php';
 
-$id = $_GET['id'];
+$errorMessages = [];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $id = $_POST['id'];
     $firstname = $_POST['firstname'];
     $lastname = $_POST['lastname'];
     $email = $_POST['email'];
@@ -13,28 +14,56 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $position = $_POST['position'];
     $profile_picture = $_POST['existing_picture'];
 
+    $target_dir = "uploads/";
+    $target_file = $target_dir . basename($_FILES["profile_picture"]["name"]);
+    $uploadOk = 1;
+    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+
     if ($_FILES['profile_picture']['name']) {
-        $target_dir = "uploads/";
-        $target_file = $target_dir . basename($_FILES["profile_picture"]["name"]);
-        if (move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file)) {
+        $check = getimagesize($_FILES["profile_picture"]["tmp_name"]);
+        if ($check === false) {
+            $errorMessages[] = "File is not an image.";
+            $uploadOk = 0;
+        }
+
+        if (file_exists($target_file)) {
+            $errorMessages[] = "Sorry, file already exists.";
+            $uploadOk = 0;
+        }
+
+        if ($_FILES["profile_picture"]["size"] > 500000) {
+            $errorMessages[] = "Sorry, your file is too large.";
+            $uploadOk = 0;
+        }
+
+        if (!in_array($imageFileType, ["jpg", "png", "jpeg", "gif"])) {
+            $errorMessages[] = "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+            $uploadOk = 0;
+        }
+
+        if ($uploadOk && move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file)) {
             $profile_picture = $target_file;
+        } else {
+            $errorMessages[] = "Sorry, there was an error uploading your file.";
         }
     }
 
-    $sql = "UPDATE employees SET firstname='$firstname', lastname='$lastname', email='$email', phone='$phone', position='$position', profile_picture='$profile_picture' WHERE id=$id";
-    if ($conn->query($sql) === TRUE) {
-        header("Location: index.php");
-    } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+    if (empty($errorMessages)) {
+        $sql = "UPDATE employees SET firstname='$firstname', lastname='$lastname', email='$email', phone='$phone', position='$position', profile_picture='$profile_picture' WHERE id=$id";
+        if ($conn->query($sql) === TRUE) {
+            header("Location: index.php");
+        } else {
+            $errorMessages[] = "Error: " . $sql . "<br>" . $conn->error;
+        }
     }
 } else {
+    $id = $_GET['id'];
     $sql = "SELECT * FROM employees WHERE id=$id";
     $result = $conn->query($sql);
     if ($result->num_rows > 0) {
-        $employee = $result->fetch_assoc();
+        $row = $result->fetch_assoc();
     } else {
-        echo "Employee not found.";
-        exit();
+        die("Employee not found");
     }
 }
 ?>
@@ -79,40 +108,54 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: #0056b3;
             border-color: #004085;
         }
-        .img-thumbnail {
-            margin-top: 10px;
+        .error-message {
+            color: red;
+            background-color: black;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Update Employee</h2>
-        <form action="update_employee.php?id=<?php echo $id; ?>" method="post" enctype="multipart/form-data">
+        <?php if (!empty($errorMessages)): ?>
+            <div class="error-message">
+                <?php foreach ($errorMessages as $errorMessage): ?>
+                    <p><?php echo $errorMessage; ?></p>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+        <form action="update_employee.php" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+            <input type="hidden" name="existing_picture" value="<?php echo $row['profile_picture']; ?>">
             <div class="form-group">
                 <label for="firstname">First Name:</label>
-                <input type="text" class="form-control" id="firstname" name="firstname" value="<?php echo $employee['firstname']; ?>" required>
+                <input type="text" class="form-control" id="firstname" name="firstname" required pattern="[A-Za-z]{2,}" title="First name must be at least 2 letters" value="<?php echo $row['firstname']; ?>">
             </div>
             <div class="form-group">
                 <label for="lastname">Last Name:</label>
-                <input type="text" class="form-control" id="lastname" name="lastname" value="<?php echo $employee['lastname']; ?>" required>
+                <input type="text" class="form-control" id="lastname" name="lastname" required pattern="[A-Za-z]{2,}" title="Last name must be at least 2 letters" value="<?php echo $row['lastname']; ?>">
             </div>
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" class="form-control" id="email" name="email" value="<?php echo $employee['email']; ?>" required>
+                <input type="email" class="form-control" id="email" name="email" required value="<?php echo $row['email']; ?>">
             </div>
             <div class="form-group">
                 <label for="phone">Phone:</label>
-                <input type="text" class="form-control" id="phone" name="phone" value="<?php echo $employee['phone']; ?>" required>
+                <input type="text" class="form-control" id="phone" name="phone" required pattern="\d{10}" title="Phone number must be exactly 10 digits" value="<?php echo $row['phone']; ?>">
             </div>
             <div class="form-group">
                 <label for="position">Position:</label>
-                <input type="text" class="form-control" id="position" name="position" value="<?php echo $employee['position']; ?>" required>
+                <input type="text" class="form-control" id="position" name="position" required value="<?php echo $row['position']; ?>">
             </div>
             <div class="form-group">
                 <label for="profile_picture">Profile Picture:</label>
-                <input type="file" class="form-control" id="profile_picture" name="profile_picture">
-                <input type="hidden" name="existing_picture" value="<?php echo $employee['profile_picture']; ?>">
-                <img src="<?php echo $employee['profile_picture']; ?>" alt="Profile Picture" class="img-thumbnail" width="100">
+                <input type="file" class="form-control-file" id="profile_picture" name="profile_picture">
+                <?php if ($row['profile_picture']): ?>
+                    <img src="<?php echo $row['profile_picture']; ?>" alt="Profile Picture" class="img-thumbnail" style="margin-top: 10px;">
+                <?php endif; ?>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Update</button>
         </form>
