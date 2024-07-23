@@ -15,11 +15,46 @@ $result = $conn->query($sql);
     <title>Employee Management</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            background: linear-gradient(to right, rgb(237, 59, 118), rgb(146, 221, 244));
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 50px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .btn {
+            margin-right: 5px;
+        }
+        table {
+            background-color: #fff;
+            color: #000;
+        }
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+        td img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h2>Employee Management</h2>
-        <a href="add_employee.php" class="btn btn-success">Add Employee</a>
+    <h2 style="color: pink;">Employee Management</h2>
+    <a href="add_employee.php" class="btn btn-success mb-3">Add Employee</a>
         <table class="table table-bordered">
             <thead>
                 <tr>
@@ -43,18 +78,17 @@ $result = $conn->query($sql);
                             <td><?php echo $row['email']; ?></td>
                             <td><?php echo $row['phone']; ?></td>
                             <td><?php echo $row['position']; ?></td>
-                            <td><img src="<?php echo $row['profile_picture']; ?>" alt="Profile Picture" class="img-thumbnail" width="50"></td>
+                            <td><img src="<?php echo $row['profile_picture']; ?>" alt="Profile Picture" class="img-thumbnail"></td>
                             <td>
-                            <a href="view_employee.php?id=<?php echo $row['id']; ?>" class="btn btn-success">View</a>
+                                <a href="view_employee.php?id=<?php echo $row['id']; ?>" class="btn btn-success">View</a>
                                 <a href="update_employee.php?id=<?php echo $row['id']; ?>" class="btn btn-primary">Edit</a>
                                 <a href="delete_employee.php?id=<?php echo $row['id']; ?>" class="btn btn-danger">Delete</a>
-
                             </td>
                         </tr>
                     <?php endwhile; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="8">No employees found</td>
+                        <td colspan="8" class="text-center">No employees found</td>
                     </tr>
                 <?php endif; ?>
             </tbody>

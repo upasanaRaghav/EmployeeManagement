@@ -10,7 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $lastname = $_POST['lastname'];
     $email = $_POST['email'];
     $phone = $_POST['phone'];
-    $position     = $_POST['position'];
+    $position = $_POST['position'];
     $profile_picture = $_POST['existing_picture'];
 
     if ($_FILES['profile_picture']['name']) {
@@ -45,6 +45,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <title>Update Employee</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, rgb(237, 59, 118), rgb(146, 221, 244));
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #343a40;
+        }
+        .form-group label {
+            color: #495057;
+            font-weight: 600;
+        }
+        .form-control {
+            border-radius: 5px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            border-radius: 5px;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        .img-thumbnail {
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -76,9 +114,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <input type="hidden" name="existing_picture" value="<?php echo $employee['profile_picture']; ?>">
                 <img src="<?php echo $employee['profile_picture']; ?>" alt="Profile Picture" class="img-thumbnail" width="100">
             </div>
-            <button type="submit" class="btn btn-primary">Update</button>
+            <button type="submit" class="btn btn-primary btn-block">Update</button>
         </form>
     </div>
 </body>
 </html>
-
